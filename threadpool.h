@@ -27,8 +27,8 @@ typedef struct {
     int threadCount;
     bool keepGoing;
     pthread_cond_t cond;
-    ThreadPool_work_queue_t *workQueue;
-    pthread_t *threadPool;
+    ThreadPool_work_queue_t workQueue;
+    pthread_t *threadPool = nullptr;
     pthread_mutex_t jobmutex;
     pthread_mutex_t kpmutex;
     pthread_mutex_t datamutex;

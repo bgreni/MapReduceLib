@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <cctype>
+#include <map>
 using namespace std;
 
 // Global variable declaration
@@ -32,29 +33,28 @@ bool fileCmp(string file1, string file2) {
     return file1stat.st_size < file2stat.st_size;
 }
 
-void printP() {
-    cout << "printing partitions" << endl;
-    for (size_t i = 0; i < P->partitionList.size(); i++) {
-        mypartition p = P->partitionList.at(i);
-        cout << "partition number " << i << endl;
-        for (auto it : p.data) {
-            cout << it.first << endl;
-        }
-    }
-}
+// void printP() {
+//     cout << "printing partitions" << endl;
+//     for (size_t i = 0; i < P->partitionList.size(); i++) {
+//         mypartition p = P->partitionList.at(i);
+//         cout << "partition number " << i << endl;
+//         p.keyCount();
+//     }
+// }
 
 /**
  * @brief runs the map reduce library with the given functions and inputs
  * @param num_files - the number of input files
  * @param filenames - an array of input file names
- * @param map - the user defined function that will perform the mapping 
+ * @param mapper - the user defined function that will perform the mapping 
  * @param num_mappers - the number of mapper threads that will be used
  * @param concate - the user defined function that will perform the reduce
  * @param num_reducers - number of reducer threads that will be used
 */
 void MR_Run(int num_files, char *filenames[],
-            Mapper map, int num_mappers,
+            Mapper mapper, int num_mappers,
             Reducer concate, int num_reducers) {
+
     reduce = concate;
     R = num_reducers;
     // R = 1;
@@ -70,7 +70,7 @@ void MR_Run(int num_files, char *filenames[],
     ThreadPool_t *mappers = ThreadPool_create(num_mappers);
     // add jobs for all files
     while (!files.empty()) {
-        ThreadPool_add_work(mappers, (thread_func_t)map, (void*)files.back().c_str());
+        ThreadPool_add_work(mappers, (thread_func_t)mapper, (void*)files.back().c_str());
         files.pop_back();
     }
     ThreadPool_destroy(mappers);
@@ -81,6 +81,7 @@ void MR_Run(int num_files, char *filenames[],
         ThreadPool_add_work(reducers, (thread_func_t)MR_ProcessPartition, (void*)i);
     }
     ThreadPool_destroy(reducers);
+    delete P;
 }
 
 /**
@@ -113,8 +114,9 @@ unsigned long MR_Partition(char *key, int num_partitions) {
 void MR_ProcessPartition(int partition_number) {
     mypartition *currPart = P->getPartition(partition_number);
     // run until the partition is empty
-    while(!currPart->partitionDone()) {
-        char* next = const_cast<char*>(currPart->peekNext());
+    auto iters = currPart->getIterators();
+    for (auto i = iters.first; i != iters.second; i++) {
+        char* next = currPart->checkKey(const_cast<char*>(i->first.c_str()), false);
         // cout << "---------------------" << endl;
         // cout << "Before Reduce: " << next << endl;
         if (next != NULL && strlen(next) != 0) {
@@ -131,10 +133,9 @@ void MR_ProcessPartition(int partition_number) {
 */
 char *MR_GetNext(char *key, int partition_number) {
     mypartition *currPart = P->getPartition(partition_number);
-    char* next = const_cast<char*>(currPart->peekNext());
+    char* next = currPart->checkKey(key, true);
     // cout << "In Reduce: " << key << " : " << next << endl;
     if (next != NULL && strcmp(next, key) == 0 && strlen(key) != 0) {
-        currPart->popNext();
         return next;
     }
     return NULL;

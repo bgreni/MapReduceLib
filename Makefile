@@ -1,6 +1,6 @@
 
-COMP = g++ -Wall -Werror -pthread -std=c++11 -g -o
-OBJ = g++ -Wall -Werror -pthread -std=c++11 -g -c 
+COMP = g++ -Wall -Werror -pthread -O3 -std=c++14 -g -o
+OBJ = g++ -Wall -Werror -pthread -O3 -std=c++14 -g -c 
 DEB = g++ -Wall -Werror -pthread -fsanitize=thread -std=c++11 -g -o
 
 default: wc

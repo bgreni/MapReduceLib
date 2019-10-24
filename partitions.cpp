@@ -1,6 +1,7 @@
 #include "partitions.h"
 #include <algorithm>
 #include <iostream>
+#include <vector>
 using namespace std;
 
 /**
@@ -21,38 +22,46 @@ bool pairComp(pair<string, string> pair1, pair<string, string> pair2) {
  * @brief inserts a new key,value pair into the partition, then sorts it into increasing order
  * @param pair - the new pair to be inserted into the partition
 */
-void mypartition::insertPair(pair<string, string> pair) {
+void mypartition::insertPair(pair<string, string> &pair) {
     pthread_mutex_lock(&mutex);
-    data.push_back(pair);
-    data.sort();
+    if (data.find(pair.first) != data.end()) {
+        data[pair.first].push_back(pair.second);
+    } else {
+        data[pair.first] = list<string>();
+        data[pair.first].push_back(pair.second);
+    }
     pthread_mutex_unlock(&mutex);
 }
 
 /**
- * @brief removes the top item from the parition
+ * @brief gives the number of unique keys in the partition
+ * @return int - number of unique keys
 */
-void mypartition::popNext() {
-    data.pop_front();
+int mypartition::keyCount() {
+    for (auto it : data) {
+        cout << it.first << endl;
+    }
+    return 1;
 }
 
-/**
- * @brief checks if all items have been been removed from the partition
- * @return bool - if the parition is empty
-*/
-bool mypartition::partitionDone() {
-    return data.empty();
-}
+pair<map<string, list<string>>::iterator, map<string, list<string>>::iterator> mypartition::getIterators() {
+    return pair<map<string, list<string>>::iterator, map<string, list<string>>::iterator>(data.begin(), data.end());
+} 
 
 /**
  * @brief returns the top item in the parition, but does not remove it
  * @return const char* - the top item in the parition, or NULL if the partition is empty
 */
-const char* mypartition::peekNext() {
-    if (data.empty()) {
+char* mypartition::checkKey(char* key, bool popItem) {
+    string s = string(key);
+    if (data[s].empty()) {
         return NULL;
     }
+    if (popItem) {
+        data[s].pop_back();
+    }
     // convert c++ string to c-style char* string
-    return data.front().first.c_str();
+    return key;
 }
 
 

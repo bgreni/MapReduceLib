@@ -5,17 +5,27 @@
 #include <utility> 
 #include <string>
 #include <pthread.h>
+#include <map>
 using namespace std;
+
+// struct cmp_str
+// {
+//    bool operator()(char const *a, char const *b) const
+//    {
+//       return strcmp(a, b) < 0;
+//    }
+// };
+
 
 class mypartition {
     private:
         pthread_mutex_t mutex;
     public:
-        list<pair<string, string>> data;
-        void insertPair(pair<string, string> pair);
-        void popNext();
-        const char* peekNext();
-        bool partitionDone();
+        map<string, list<string>> data;
+        void insertPair(pair<string, string> &pair);
+        char* checkKey(char* key, bool popItem);
+        int keyCount();
+        pair<map<string, list<string>>::iterator, map<string, list<string>>::iterator> getIterators();
 };
 
 

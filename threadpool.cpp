@@ -42,7 +42,7 @@ ThreadPool_t* ThreadPool_create(int num) {
     pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
     int threadCount = num;
     pthread_t *threadPool = new pthread_t[num];
-    ThreadPool_work_queue_t *workQueue = new ThreadPool_work_queue_t;
+    ThreadPool_work_queue_t workQueue;
 
     ThreadPool_t *newPool =  new ThreadPool_t {
         threadCount,
@@ -76,14 +76,12 @@ void ThreadPool_destroy(ThreadPool_t *tp) {
         pthread_cond_broadcast(&tp->cond);
         pthread_join(tp->threadPool[i], NULL);
     }
-    cout << "all done" << endl;
     // release resources
     pthread_mutex_destroy(&tp->kpmutex);
     pthread_mutex_destroy(&tp->jobmutex);
     pthread_mutex_destroy(&tp->datamutex);
     pthread_cond_destroy(&tp->cond);
     delete[] tp->threadPool;
-    delete tp->workQueue;
     delete tp;
 }
 
@@ -100,7 +98,7 @@ bool ThreadPool_add_work(ThreadPool_t *tp, thread_func_t func, void *arg) {
         arg,
     };
     pthread_mutex_lock(&tp->datamutex);
-    tp->workQueue->addToQueue(newWork);
+    tp->workQueue.addToQueue(newWork);
     pthread_mutex_unlock(&tp->datamutex);
     // signal waiting threads that a new job is available
     pthread_cond_signal(&tp->cond);
@@ -115,7 +113,7 @@ bool ThreadPool_add_work(ThreadPool_t *tp, thread_func_t func, void *arg) {
 ThreadPool_work_t* ThreadPool_get_work(ThreadPool_t *tp) {
     ThreadPool_work_t *work = new ThreadPool_work_t;
     pthread_mutex_lock(&tp->datamutex);
-    *work = tp->workQueue->getJob();
+    *work = tp->workQueue.getJob();
     pthread_mutex_unlock(&tp->datamutex);
     return work;
 }  
@@ -138,7 +136,7 @@ void *Thread_run(ThreadPool_t *tp) {
         ThreadPool_work_t *work = ThreadPool_get_work(tp);
         pthread_mutex_unlock(&tp->jobmutex);
         work->func(work->arg);
-        delete work;
+        // delete work;
     }
     pthread_mutex_unlock(&tp->jobmutex);
     pthread_exit(NULL);
@@ -174,7 +172,7 @@ void stopKP(ThreadPool_t *tp) {
 */
 bool emptyQueue(ThreadPool_t *tp) {
     pthread_mutex_lock(&tp->datamutex);
-    bool b = tp->workQueue->isEmpty();
+    bool b = tp->workQueue.isEmpty();
     pthread_mutex_unlock(&tp->datamutex);
     return b;
 }
