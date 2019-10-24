@@ -41,7 +41,6 @@ ThreadPool_t* ThreadPool_create(int num) {
     pthread_mutex_t datamutex = PTHREAD_MUTEX_INITIALIZER;
     pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
     int threadCount = num;
-    pthread_t *threadPool = new pthread_t[num];
     ThreadPool_work_queue_t workQueue;
 
     ThreadPool_t *newPool =  new ThreadPool_t {
@@ -49,7 +48,7 @@ ThreadPool_t* ThreadPool_create(int num) {
         true,
         cond,
         workQueue,
-        threadPool,
+        new pthread_t[num],
         jobmutex,
         kpmutex,
         datamutex
@@ -136,7 +135,7 @@ void *Thread_run(ThreadPool_t *tp) {
         ThreadPool_work_t *work = ThreadPool_get_work(tp);
         pthread_mutex_unlock(&tp->jobmutex);
         work->func(work->arg);
-        // delete work;
+        delete work;
     }
     pthread_mutex_unlock(&tp->jobmutex);
     pthread_exit(NULL);
