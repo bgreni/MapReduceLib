@@ -22,16 +22,26 @@ bool pairComp(pair<string, string> pair1, pair<string, string> pair2) {
  * @brief inserts a new key,value pair into the partition, then sorts it into increasing order
  * @param pair - the new pair to be inserted into the partition
 */
-void mypartition::insertPair(pair<string, string> &pair) {
+void mypartition::insertPair(pair<string, string> pair) {
     pthread_mutex_lock(&mutex);
+    // cout << "------------------------------------" << endl;
+    // cout  << "TID: " << pthread_self() << endl;
+    // cout << "PUTTING PAIR INTO PARTITION" << endl;
+    // cout << pair.first << " : " << pair.second << endl;
+    // cout << "PARTITION BEFORE" << endl;
+    // keyCount();
     if (data.find(pair.first) != data.end()) {
         data[pair.first].push_back(pair.second);
     } else {
         data[pair.first] = list<string>();
         data[pair.first].push_back(pair.second);
     }
+    // cout << "PARITION AFTER" << endl;
+    // keyCount();
+    // cout << "------------------------------------" << endl;
     pthread_mutex_unlock(&mutex);
 }
+
 
 /**
  * @brief gives the number of unique keys in the partition
@@ -39,7 +49,7 @@ void mypartition::insertPair(pair<string, string> &pair) {
 */
 int mypartition::keyCount() {
     for (auto it : data) {
-        cout << it.first << endl;
+        cout << it.first << " : " << it.second.size() << endl;
     }
     return 1;
 }
@@ -69,6 +79,8 @@ char* mypartition::checkKey(char* key, bool popItem) {
 // mypartitions implementation
 ///////////////////////////////////////////////////
 
+mypartitions::mypartitions() {}
+
 /**
  * @brief constructor for partitions object
  * @param numPartitions - the number of paritions contained in this object
@@ -84,8 +96,13 @@ mypartitions::mypartitions(int numPartitions) {
  * @param pair - the new pair
  * @param paritionNum - the parition the pair will be inserted into
 */
+
+pthread_mutex_t t = PTHREAD_MUTEX_INITIALIZER;
+
 void mypartitions::addToPartition(pair<string, string> pair, int partitionNum) {
+    // pthread_mutex_lock(&t);
     partitionList.at(partitionNum).insertPair(pair);
+    // pthread_mutex_unlock(&t);
 }
 
 /**

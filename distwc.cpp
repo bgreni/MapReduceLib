@@ -7,9 +7,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <iostream>
+#include <chrono>
 using namespace std;
 
 void Map(char *file_name) {
+    // cout << file_name << endl;
     FILE *fp = fopen(file_name, "r");
     assert(fp != NULL);
     char *line = NULL;
@@ -37,5 +39,10 @@ void Reduce(char *key, int partition_number) {
 }
 
 int main(int argc, char *argv[]) {
-    MR_Run(argc - 1, &(argv[1]), Map, 10, Reduce, 10);
+    auto start = chrono::high_resolution_clock::now(); 
+    MR_Run(argc - 3, &(argv[3]), Map, atoi(argv[1]), Reduce, atoi(argv[2]));
+    // MR_Run(argc - 1, &(argv[1]), Map, 10, Reduce, 10);
+    auto stop = chrono::high_resolution_clock::now(); 
+    auto duration = chrono::duration_cast<chrono::milliseconds>(stop - start); 
+    cout << duration.count() << endl;
 }

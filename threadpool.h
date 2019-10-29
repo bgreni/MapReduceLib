@@ -25,15 +25,15 @@ typedef struct {
 
 typedef struct {
     int threadCount;
+    int threadsDone;
     bool keepGoing;
     pthread_cond_t cond;
     ThreadPool_work_queue_t workQueue;
-    pthread_t *threadPool = nullptr;
+    pthread_t *threadPool;
     pthread_mutex_t jobmutex;
     pthread_mutex_t kpmutex;
-    pthread_mutex_t datamutex;
+    pthread_mutex_t tdmutext;
 } ThreadPool_t;
-
 
 /**
 * A C style constructor for creating a new ThreadPool object

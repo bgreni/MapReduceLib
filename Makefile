@@ -3,7 +3,7 @@ COMP = g++ -Wall -Werror -pthread -O3 -std=c++14 -g -o
 OBJ = g++ -Wall -Werror -pthread -O3 -std=c++14 -g -c 
 DEB = g++ -Wall -Werror -pthread -fsanitize=thread -O3 -std=c++14 -g -o
 
-default: debug
+default: wc
 
 wc: mapreduce.o threadpool.o distwc.o partitions.o Makefile
 	$(COMP) wordcount mapreduce.o threadpool.o distwc.o partitions.o
@@ -24,7 +24,10 @@ clean:
 	-rm *.o $(objects)
 	-rm wordcount
 
-debug:
+clean-result:
+	-rm result*
+
+debug: mapreduce.o threadpool.o distwc.o partitions.o Makefile
 	$(DEB) wordcount mapreduce.o threadpool.o distwc.o partitions.o
 
 

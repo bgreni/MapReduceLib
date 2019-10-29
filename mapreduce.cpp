@@ -33,14 +33,14 @@ bool fileCmp(string file1, string file2) {
     return file1stat.st_size < file2stat.st_size;
 }
 
-// void printP() {
-//     cout << "printing partitions" << endl;
-//     for (size_t i = 0; i < P->partitionList.size(); i++) {
-//         mypartition p = P->partitionList.at(i);
-//         cout << "partition number " << i << endl;
-//         p.keyCount();
-//     }
-// }
+void printP() {
+    cout << "printing partitions" << endl;
+    for (size_t i = 0; i < P->partitionList.size(); i++) {
+        mypartition p = P->partitionList.at(i);
+        cout << "partition number " << i << endl;
+        p.keyCount();
+    }
+}
 
 /**
  * @brief runs the map reduce library with the given functions and inputs
@@ -57,7 +57,7 @@ void MR_Run(int num_files, char *filenames[],
 
     reduce = concate;
     R = num_reducers;
-    // R = 1;
+    // R = 10;
     P = new mypartitions(R);
     // sort the filenames in decreasing order so biggest jobs will go into queue first
     vector<string> files;
@@ -73,6 +73,7 @@ void MR_Run(int num_files, char *filenames[],
         ThreadPool_add_work(mappers, (thread_func_t)mapper, (void*)files.back().c_str());
         files.pop_back();
     }
+
     ThreadPool_destroy(mappers);
     // printP();
 

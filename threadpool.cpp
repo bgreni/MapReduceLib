@@ -5,6 +5,9 @@ using namespace std;
 bool checkKP(ThreadPool_t *tp);
 void stopKP(ThreadPool_t *tp);
 bool emptyQueue(ThreadPool_t *tp);
+void incTD(ThreadPool_t *tp);
+bool checkTD(ThreadPool_t *tp);
+
 ////////////////////////////////////////////////////
 // ThreadPool_work_queue_t implementation
 ///////////////////////////////////////////////////
@@ -38,20 +41,21 @@ ThreadPool_t* ThreadPool_create(int num) {
     // init instance values of a threadpool
     pthread_mutex_t jobmutex = PTHREAD_MUTEX_INITIALIZER;
     pthread_mutex_t kpmutex = PTHREAD_MUTEX_INITIALIZER;
-    pthread_mutex_t datamutex = PTHREAD_MUTEX_INITIALIZER;
+    pthread_mutex_t tdmutex = PTHREAD_MUTEX_INITIALIZER;
     pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
     int threadCount = num;
     ThreadPool_work_queue_t workQueue;
 
     ThreadPool_t *newPool =  new ThreadPool_t {
         threadCount,
+        0,
         true,
         cond,
         workQueue,
         new pthread_t[num],
         jobmutex,
         kpmutex,
-        datamutex
+        tdmutex
     };
 
     // create threads
@@ -69,16 +73,17 @@ ThreadPool_t* ThreadPool_create(int num) {
 void ThreadPool_destroy(ThreadPool_t *tp) {
     // wait till all work has been  completed
     // TODO MAKE THIS PART LESS STUPID
-    while (!emptyQueue(tp));
+    pthread_mutex_lock(&tp->jobmutex);
     stopKP(tp);
+    pthread_mutex_unlock(&tp->jobmutex);
+    pthread_cond_broadcast(&tp->cond);
+    // while (!checkTD(tp));
     for (int i = 0; i < tp->threadCount; i++) {
-        pthread_cond_broadcast(&tp->cond);
         pthread_join(tp->threadPool[i], NULL);
     }
     // release resources
     pthread_mutex_destroy(&tp->kpmutex);
     pthread_mutex_destroy(&tp->jobmutex);
-    pthread_mutex_destroy(&tp->datamutex);
     pthread_cond_destroy(&tp->cond);
     delete[] tp->threadPool;
     delete tp;
@@ -96,11 +101,11 @@ bool ThreadPool_add_work(ThreadPool_t *tp, thread_func_t func, void *arg) {
         func,
         arg,
     };
-    pthread_mutex_lock(&tp->datamutex);
+    pthread_mutex_lock(&tp->jobmutex);
     tp->workQueue.addToQueue(newWork);
-    pthread_mutex_unlock(&tp->datamutex);
-    // signal waiting threads that a new job is available
+    pthread_mutex_unlock(&tp->jobmutex);
     pthread_cond_signal(&tp->cond);
+    // signal waiting threads that a new job is available
     return true;
 }
 
@@ -109,11 +114,9 @@ bool ThreadPool_add_work(ThreadPool_t *tp, thread_func_t func, void *arg) {
  * @param tp - the threadpool to get the work from
  * @return ThreadPool_work_t* - pointer to a job 
 */
-ThreadPool_work_t* ThreadPool_get_work(ThreadPool_t *tp) {
+ThreadPool_work_t *ThreadPool_get_work(ThreadPool_t *tp) {
     ThreadPool_work_t *work = new ThreadPool_work_t;
-    pthread_mutex_lock(&tp->datamutex);
     *work = tp->workQueue.getJob();
-    pthread_mutex_unlock(&tp->datamutex);
     return work;
 }  
 
@@ -129,7 +132,7 @@ void *Thread_run(ThreadPool_t *tp) {
             pthread_cond_wait(&tp->cond, &tp->jobmutex);
         }
         // check that job processing is still ongoing
-        if (!checkKP(tp)) {
+        if (!checkKP(tp) && emptyQueue(tp)) {
             break;
         }
         ThreadPool_work_t *work = ThreadPool_get_work(tp);
@@ -138,8 +141,10 @@ void *Thread_run(ThreadPool_t *tp) {
         delete work;
     }
     pthread_mutex_unlock(&tp->jobmutex);
+    incTD(tp);
     pthread_exit(NULL);
-    return NULL;
+    return nullptr;
+
 }
 
 /**
@@ -148,9 +153,9 @@ void *Thread_run(ThreadPool_t *tp) {
  * @return bool - whether the condition is true
 */
 bool checkKP(ThreadPool_t *tp) {
-    pthread_mutex_lock(&tp->kpmutex);
+    // pthread_mutex_lock(&tp->kpmutex);
     bool kp = tp->keepGoing;
-    pthread_mutex_unlock(&tp->kpmutex);
+    // pthread_mutex_unlock(&tp->kpmutex);
     return kp;
 }
 
@@ -159,9 +164,9 @@ bool checkKP(ThreadPool_t *tp) {
  * @param tp - the threadpool we want to begin exiting
 */
 void stopKP(ThreadPool_t *tp) {
-    pthread_mutex_lock(&tp->kpmutex);
+    // pthread_mutex_lock(&tp->kpmutex);
     tp->keepGoing = false;
-    pthread_mutex_unlock(&tp->kpmutex);
+    // pthread_mutex_unlock(&tp->kpmutex);
 }
 
 /**
@@ -170,10 +175,20 @@ void stopKP(ThreadPool_t *tp) {
  * @return - bool returns true if the work queue is empty
 */
 bool emptyQueue(ThreadPool_t *tp) {
-    pthread_mutex_lock(&tp->datamutex);
-    bool b = tp->workQueue.isEmpty();
-    pthread_mutex_unlock(&tp->datamutex);
-    return b;
+    return tp->workQueue.isEmpty();
+}
+
+void incTD(ThreadPool_t *tp) {
+    // pthread_mutex_lock(&tp->tdmutext);
+    tp->threadsDone++;
+    // pthread_mutex_unlock(&tp->tdmutext);
+}
+
+bool checkTD(ThreadPool_t *tp) {
+    // pthread_mutex_lock(&tp->tdmutext);
+    int  n = tp->threadsDone;
+    // pthread_mutex_unlock(&tp->tdmutext);
+    return (tp->threadCount == n);
 }
 
 

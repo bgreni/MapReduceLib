@@ -22,7 +22,7 @@ class mypartition {
         pthread_mutex_t mutex;
     public:
         map<string, list<string>> data;
-        void insertPair(pair<string, string> &pair);
+        void insertPair(pair<string, string> pair);
         char* checkKey(char* key, bool popItem);
         int keyCount();
         pair<map<string, list<string>>::iterator, map<string, list<string>>::iterator> getIterators();
@@ -32,6 +32,7 @@ class mypartition {
 class mypartitions {
     private:
     public:
+        mypartitions();
         vector<mypartition> partitionList;
         mypartitions(int numPartitions);
         void addToPartition(pair<string, string> pair, int partitionNum);
