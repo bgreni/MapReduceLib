@@ -47,8 +47,8 @@ int main(int argc, char **argv)
       else
       {
         total++;
-        cout << "Input: " << user_input << endl;
-        cout << "Correct: " << correct_input << endl;
+        cout << "Input: " << "["+user_input+"]" << endl;
+        cout << "Correct: " << "["+correct_input+"]" << endl;
       }
     }
 

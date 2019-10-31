@@ -19,6 +19,6 @@ clean-all:
 	rm -rf validation
 
 threadpool.o: ../threadpool.cpp ../threadpool.h
-distwc.o: distwc.c ../mapreduce.h
+distwc.o: distwc.cpp ../mapreduce.h
 mapreduce.o: ../mapreduce.cpp ../mapreduce.h ../threadpool.h
 partitions.o: ../partitions.cpp ../partitions.h

@@ -47,19 +47,21 @@ int main(int argc, char **argv)
       else
       {
         total++;
+        cout << "-----------------------------" << endl;
         cout << "Input: " << user_input << endl;
         cout << "Correct: " << correct_input << endl;
+        cout << "-----------------------------" << endl;
       }
     }
 
-    while(getline(user_output_file, user_input)){
-      cout << "Uh oh, you have extra inputs " << user_input << endl;
-      total++;
-    }
-    while(getline(correct_output_file, correct_input)){
-      cout << "Uh oh, you don't have enough inputs " << correct_input << endl;
-      total++;
-    }
+    // while(getline(user_output_file, user_input)){
+    //   cout << "Uh oh, you have extra inputs " << user_input << endl;
+    //   total++;
+    // }
+    // while(getline(correct_output_file, correct_input)){
+    //   cout << "Uh oh, you don't have enough inputs " << correct_input << endl;
+    //   total++;
+    // }
 
     user_output_file.close();
     correct_output_file.close();

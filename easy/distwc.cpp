@@ -3,10 +3,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include "../mapreduce.h"
+#include <iostream>
+using namespace std;
 
 void Map(char *file_name) {
-  printf("%s",file_name);
+  // printf("[%s]\n", file_name);
   FILE *fp = fopen(file_name, "r");
+  // perror("fopen failed: ");
+  // cout << "FILENAME: " << file_name << " : " << (fp == NULL) << endl;
+
   assert(fp != NULL);
   char *line = NULL;
   size_t size = 0;
@@ -15,7 +20,6 @@ void Map(char *file_name) {
     char *token, *dummy = line;
     while ((token = strsep(&dummy, " \t\n\r")) != NULL) {
       MR_Emit(token, (char*)"1");
-      
     }
     
   }
@@ -41,5 +45,6 @@ int main(int argc, char *argv[]) {
     printf("Usage: ./distwc <num_mapper> <num_reducer> [files]... \n");
     return -1;
   }
+
   MR_Run(argc - 3, &(argv[3]), Map, atoi(argv[1]), Reduce, atoi(argv[2]));
 }

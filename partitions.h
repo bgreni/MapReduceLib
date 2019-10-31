@@ -21,11 +21,11 @@ class mypartition {
     private:
         pthread_mutex_t mutex;
     public:
-        map<string, list<string>> data;
+        map<string, list<string> > data;
         void insertPair(pair<string, string> pair);
         char* checkKey(char* key, bool popItem);
         int keyCount();
-        pair<map<string, list<string>>::iterator, map<string, list<string>>::iterator> getIterators();
+        pair<map<string, list<string> >::iterator, map<string, list<string> >::iterator> getIterators();
 };
 
 

@@ -1,7 +1,8 @@
 
-COMP = g++ -Wall -Werror -pthread -O3 -std=c++14 -g -o
-OBJ = g++ -Wall -Werror -pthread -O3 -std=c++14 -g -c 
-DEB = g++ -Wall -Werror -pthread -fsanitize=thread -O3 -std=c++14 -g -o
+COMP = g++ -Wall -Werror -pthread -O3 -std=c++14 -D_GNU_SOURCE  -o
+OBJ = g++ -Wall -Werror -pthread -O3 -std=c++14 -D_GNU_SOURCE  -c 
+DEB = g++ -Wall -Werror -pthread -O3 -std=c++14 -g -o
+SAN =  g++ -Wall -Werror -pthread -fsanitize=thread -O3 -std=c++14 -D_GNU_SOURCE  -o
 
 default: wc
 
@@ -29,6 +30,9 @@ clean-result:
 
 debug: mapreduce.o threadpool.o distwc.o partitions.o Makefile
 	$(DEB) wordcount mapreduce.o threadpool.o distwc.o partitions.o
+
+sani: mapreduce.o threadpool.o distwc.o partitions.o Makefile
+	$(SAN) wordcount mapreduce.o threadpool.o distwc.o partitions.o
 
 
 

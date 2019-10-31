@@ -54,7 +54,7 @@ void printP() {
 void MR_Run(int num_files, char *filenames[],
             Mapper mapper, int num_mappers,
             Reducer concate, int num_reducers) {
-
+    
     reduce = concate;
     R = num_reducers;
     // R = 10;
@@ -62,27 +62,48 @@ void MR_Run(int num_files, char *filenames[],
     // sort the filenames in decreasing order so biggest jobs will go into queue first
     vector<string> files;
     for (int i = 0; i < num_files; i++) {
+        // FILE *fp = fopen(filenames[i],"r");
+        // cout << (fp == NULL) << endl;
+        // fclose(fp);
         files.push_back(string(filenames[i]));
     }
-    sort(files.begin(), files.end(), fileCmp);
 
+    sort(files.begin(), files.end(), fileCmp);
+    
+    // for (auto f : files) {
+    //     cout << f << endl;
+    // }
     // create mapper threads
     ThreadPool_t *mappers = ThreadPool_create(num_mappers);
     // add jobs for all files
-    while (!files.empty()) {
-        ThreadPool_add_work(mappers, (thread_func_t)mapper, (void*)files.back().c_str());
-        files.pop_back();
+    for (size_t i = 0; i < files.size(); i++) {
+        ThreadPool_add_work(mappers, (thread_func_t)mapper, (void*)files.at(i).c_str());
+        // files.pop_back();
     }
+    // cout << "HERE 1" << endl;
 
     ThreadPool_destroy(mappers);
     // printP();
+    // cout << "HERE 2" << endl;
 
-    ThreadPool_t *reducers = ThreadPool_create(R);
+    pthread_t reduceThreads[R];
     for (long int i = 0; i < R; i++) {
-        ThreadPool_add_work(reducers, (thread_func_t)MR_ProcessPartition, (void*)i);
+        pthread_create(&reduceThreads[i], NULL, (void*(*)(void *))&MR_ProcessPartition, (void*)i);
     }
-    ThreadPool_destroy(reducers);
+    // cout << "HERE 3" << endl;
+
+    for (int i = 0; i < R; i++) {
+        pthread_join(reduceThreads[i], nullptr);
+    }
+    // cout << "HERE 4" << endl;
+    // ThreadPool_t *reducers = ThreadPool_create(R);
+    // for (long int i = 0; i < R; i++) {
+    //     ThreadPool_add_work(reducers, (thread_func_t)MR_ProcessPartition, (void*)i);
+    // }
+    // ThreadPool_destroy(reducers);
+    
     delete P;
+    // cout << "HERE 5" << endl;
 }
 
 /**
@@ -104,7 +125,7 @@ unsigned long MR_Partition(char *key, int num_partitions) {
     unsigned long hash = 5381;
     int c;
     while ((c = *key++) != '\0')
-    hash = hash * 33 + c;
+        hash = hash * 33 + c;
     return hash % num_partitions;
 }
 
@@ -120,7 +141,7 @@ void MR_ProcessPartition(int partition_number) {
         char* next = currPart->checkKey(const_cast<char*>(i->first.c_str()), false);
         // cout << "---------------------" << endl;
         // cout << "Before Reduce: " << next << endl;
-        if (next != NULL && strlen(next) != 0) {
+        if (next != NULL) {
             reduce(next, partition_number);
         }
     }
@@ -136,7 +157,7 @@ char *MR_GetNext(char *key, int partition_number) {
     mypartition *currPart = P->getPartition(partition_number);
     char* next = currPart->checkKey(key, true);
     // cout << "In Reduce: " << key << " : " << next << endl;
-    if (next != NULL && strcmp(next, key) == 0 && strlen(key) != 0) {
+    if (next != NULL && strcmp(next, key) == 0) {
         return next;
     }
     return NULL;
